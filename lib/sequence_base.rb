@@ -40,7 +40,7 @@ class SequenceBase
     @test_warnings = []
   end
 
-  def resume(request = nil, headers = nil)
+  def resume(request = nil, headers = nil, &block)
 
     @params = request.params
 
@@ -60,10 +60,12 @@ class SequenceBase
     @sequence_result.wait_at_endpoint = nil
     @sequence_result.redirect_to_url = nil
 
-    start
+    @sequence_result.save!
+
+    start(&block)
   end
 
-  def start(&block)
+  def start
     if @sequence_result.nil?
       @sequence_result = SequenceResult.new(name: sequence_name, result: STATUS[:pass])
     end
@@ -78,7 +80,7 @@ class SequenceBase
       LoggedRestClient.clear_log
       result = self.method(test_method).call()
 
-      yield result
+      yield result if block_given?
 
       unless @client.nil?
         @client.requests.each do |req|

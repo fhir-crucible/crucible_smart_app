@@ -90,18 +90,20 @@ get '/instance/:id/:sequence/?' do
     sequence = klass.new(instance, client)
 
     stream do |out|
+      out << 'Running tests'
       sequence_result = sequence.start do |result|
-        out << result.result
+        out << '.' #result.result
       end
-      out << "<script> window.location = '/instance/#{params[:id]}/##{params[:sequence]}'</script>"
+      instance.sequence_results.push(sequence_result)
+      instance.save!
+      if sequence_result.redirect_to_url
+        puts "redirect to #{sequence_result.redirect_to_url}"
+        out << "<script> window.location = '#{sequence_result.redirect_to_url}'</script>"
+      else 
+        out << "<script> window.location = '/instance/#{params[:id]}/##{params[:sequence]}'</script>"
+      end
     end
 
-    # instance.sequence_results.push(sequence_result)
-    # instance.save!
-
-    # if sequence_result.redirect_to_url
-    #   redirect sequence_result.redirect_to_url
-    # end
   else 
     redirect "/instance/#{params[:id]}/##{params[:sequence]}"
   end
@@ -164,7 +166,7 @@ post '/instance/:id/DynamicRegistration' do
     # }
     puts "DynamicRegistration Success. Client ID: #{registration_response['client_id']}"
     @instance.update(client_id: registration_response['client_id'], dynamically_registered: true)
-    sequence_result = DynamicRegistrationSequence.new(@instance, nil).start
+    sequence_result = DynamicRegistrationSequence.new(@instance, nil).start {}
     @instance.sequence_results.push(sequence_result)
   end
   @instance.save!
@@ -204,14 +206,28 @@ get '/instance/:id/:key/:endpoint/?' do
 
     client = FHIR::Client.new(instance.url)
     sequence = klass.new(instance, client, sequence_result)
-    sequence_result = sequence.resume(request, headers)
-    sequence_result.save!
-
-    if sequence_result.redirect_to_url
-      redirect sequence_result.redirect_to_url
+    stream do |out|
+      out << 'Running tests'
+      sequence_result = sequence.resume(request, headers) do |result|
+        out << '.' #result.result
+      end
+      instance.sequence_results.push(sequence_result)
+      instance.save!
+      if sequence_result.redirect_to_url
+        # redirect sequence_result.redirect_to_url
+        out << "<script> window.location = '#{sequence_result.redirect_to_url}'</script>"
+      else 
+        out << "<script> window.location = '/instance/#{params[:id]}/##{params[:sequence]}'</script>"
+      end
     end
+    # sequence_result = sequence.resume(request, headers)
+    # sequence_result.save!
 
-    redirect "/instance/#{params[:id]}/##{sequence_result.name}"
+    # if sequence_result.redirect_to_url
+    #   redirect sequence_result.redirect_to_url
+    # end
+
+    # redirect "/instance/#{params[:id]}/##{sequence_result.name}"
 
   end
 end
