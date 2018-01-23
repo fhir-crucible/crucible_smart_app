@@ -89,15 +89,22 @@ get '/instance/:id/:sequence/?' do
   if klass
     sequence = klass.new(instance, client)
 
-    sequence_result = sequence.start
-    instance.sequence_results.push(sequence_result)
-    instance.save!
-
-    if sequence_result.redirect_to_url
-      redirect sequence_result.redirect_to_url
+    stream do |out|
+      sequence_result = sequence.start do |result|
+        out << result.result
+      end
+      out << "<script> window.location = '/instance/#{params[:id]}/##{params[:sequence]}'</script>"
     end
+
+    # instance.sequence_results.push(sequence_result)
+    # instance.save!
+
+    # if sequence_result.redirect_to_url
+    #   redirect sequence_result.redirect_to_url
+    # end
+  else 
+    redirect "/instance/#{params[:id]}/##{params[:sequence]}"
   end
-  redirect "/instance/#{params[:id]}/##{params[:sequence]}"
 end
 
 post '/instance/:id/ConformanceSkip/?' do

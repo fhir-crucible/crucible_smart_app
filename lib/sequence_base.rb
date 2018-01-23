@@ -63,7 +63,7 @@ class SequenceBase
     start
   end
 
-  def start
+  def start(&block)
     if @sequence_result.nil?
       @sequence_result = SequenceResult.new(name: sequence_name, result: STATUS[:pass])
     end
@@ -77,6 +77,8 @@ class SequenceBase
       @client.requests = [] unless @client.nil?
       LoggedRestClient.clear_log
       result = self.method(test_method).call()
+
+      yield result
 
       unless @client.nil?
         @client.requests.each do |req|
