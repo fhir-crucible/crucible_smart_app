@@ -91,15 +91,24 @@ get '/instance/:id/:sequence/?' do
   if klass
     sequence = klass.new(instance, client)
 
-    sequence_result = sequence.start
-    instance.sequence_results.push(sequence_result)
-    instance.save!
-
-    if sequence_result.redirect_to_url
-      redirect sequence_result.redirect_to_url
+    stream do |out|
+      out << 'Running tests'
+      sequence_result = sequence.start do |result|
+        out << '.' #result.result
+      end
+      instance.sequence_results.push(sequence_result)
+      instance.save!
+      if sequence_result.redirect_to_url
+        puts "redirect to #{sequence_result.redirect_to_url}"
+        out << "<script> window.location = '#{sequence_result.redirect_to_url}'</script>"
+      else 
+        out << "<script> window.location = '/instance/#{params[:id]}/##{params[:sequence]}'</script>"
+      end
     end
+
+  else 
+    redirect "/instance/#{params[:id]}/##{params[:sequence]}"
   end
-  redirect "/instance/#{params[:id]}/##{params[:sequence]}"
 end
 
 post '/instance/:id/ConformanceSkip/?' do
@@ -159,14 +168,28 @@ get '/instance/:id/:key/:endpoint/?' do
     client.use_dstu2
     client.default_json
     sequence = klass.new(instance, client, sequence_result)
-    sequence_result = sequence.resume(request, headers)
-    sequence_result.save!
-
-    if sequence_result.redirect_to_url
-      redirect sequence_result.redirect_to_url
+    stream do |out|
+      out << 'Running tests'
+      sequence_result = sequence.resume(request, headers) do |result|
+        out << '.' #result.result
+      end
+      instance.sequence_results.push(sequence_result)
+      instance.save!
+      if sequence_result.redirect_to_url
+        # redirect sequence_result.redirect_to_url
+        out << "<script> window.location = '#{sequence_result.redirect_to_url}'</script>"
+      else 
+        out << "<script> window.location = '/instance/#{params[:id]}/##{params[:sequence]}'</script>"
+      end
     end
+    # sequence_result = sequence.resume(request, headers)
+    # sequence_result.save!
 
-    redirect "/instance/#{params[:id]}/##{sequence_result.name}"
+    # if sequence_result.redirect_to_url
+    #   redirect sequence_result.redirect_to_url
+    # end
+
+    # redirect "/instance/#{params[:id]}/##{sequence_result.name}"
 
   end
 end
