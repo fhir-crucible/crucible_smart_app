@@ -6,6 +6,7 @@ class TestingInstance
   property :client_id, String
   property :base_url, String
 
+  property :client_name, String
   property :scopes, String
   property :launch_type, String
   property :state, String
@@ -21,8 +22,14 @@ class TestingInstance
 
   property :token, String
   property :patient_id, String
+  property :token_retrieved_at, DateTime
 
   property :created_at, DateTime, default: proc { DateTime.now }
+  
+  property :oauth_introspection_endpoint, String
+  property :resource_id, String
+  property :resource_secret, String
+  property :introspect_token, String
 
   has n, :sequence_results
 
