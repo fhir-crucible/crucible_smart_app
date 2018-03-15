@@ -17,7 +17,7 @@ DEFAULT_SCOPES = 'launch launch/patient online_access openid profile user/*.* pa
 PURGE_DATABASE = true
 
 DataMapper::Logger.new($stdout, :debug) if settings.environment == :development
-DataMapper::Model.raise_on_save_failure = true 
+DataMapper::Model.raise_on_save_failure = true
 
 DataMapper.setup(:default, "sqlite3:data/#{settings.environment.to_s}_data.db")
 
@@ -29,6 +29,7 @@ require './lib/sequence_base'
 end
 
 #TODO clean up database stuff
+OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 DataMapper.finalize
 
@@ -130,12 +131,12 @@ get '/smart/:id/:sequence/?' do
       if sequence_result.redirect_to_url
         out << "<script>$('#testsRunningModal').find('.modal-body').html('Redirecting to #{sequence_result.redirect_to_url}');</script>"
         out << "<script> window.location = '#{sequence_result.redirect_to_url}'</script>"
-      else 
+      else
         out << "<script> window.location = '/smart/#{params[:id]}/##{params[:sequence]}'</script>"
       end
     end
 
-  else 
+  else
    redirect "/smart/#{params[:id]}/##{params[:sequence]}"
   end
 
@@ -245,7 +246,7 @@ get '/smart/:id/:key/:endpoint/?' do
       if sequence_result.redirect_to_url
         out << "<script>$('#testsRunningModal').find('modal-body').html('Redirecting to #{sequence_result.redirect_to_url}');</script>"
         out << "<script> window.location = '#{sequence_result.redirect_to_url}'</script>"
-      else 
+      else
         out << "<script> window.location = '/smart/#{params[:id]}/##{params[:sequence]}'</script>"
       end
     end
@@ -260,7 +261,7 @@ post '/smart/:id/TokenIntrospection' do
 
   # copy over the access token to a different place in case it's not the same
   @instance.update(introspect_token: params['access_token'])
-  
+
   redirect "/smart/#{params[:id]}/TokenIntrospection/"
 
 end
