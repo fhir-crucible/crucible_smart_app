@@ -1,5 +1,5 @@
 class LoggedRestClient
-  
+
   @@requests = []
 
   def self.clear_log
@@ -19,7 +19,7 @@ class LoggedRestClient
     @@requests << {direction: :outbound, request: request, response: reply}
   end
 
-  def post(url, payload, headers = {}) 
+  def post(url, payload, headers = {})
     reply = RestClient.post(url, payload, headers)
     request = {
       method: :post,
@@ -32,7 +32,7 @@ class LoggedRestClient
   end
 
   def self.get(url, headers={}, &block)
-    reply = RestClient.get(url, nil, headers, &block)
+    reply = RestClient.get(url, headers, &block)
     request = {
       method: :get,
       url: url,
@@ -110,5 +110,5 @@ class LoggedRestClient
     self.record_response(request, reply)
     return reply
   end
-  
+
 end
