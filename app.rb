@@ -29,7 +29,6 @@ require './lib/sequence_base'
 end
 
 #TODO clean up database stuff
-OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 DataMapper.finalize
 
