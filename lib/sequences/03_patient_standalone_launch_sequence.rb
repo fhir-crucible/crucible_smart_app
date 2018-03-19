@@ -153,36 +153,4 @@ class PatientStandaloneLaunchSequence < SequenceBase
 
   end
 
-  test 'Data returned from token exchange contains required OpenID Connect information.',
-    '1. Examine the ID token for its issuer property '\
-    '2. Perform a GET {issuer}/.well-known/openid-configuration '\
-    '3. Fetch the server’s JSON Web Key by following the jwks_uri property '\
-    '4. Validate the token’s signature against the public key from step #3 '\
-    '5. Extract the profile claim and treat it as the URL of a FHIR resource' do
-
-    #1.
-    assert @token_response_body.has_key?('id_token'), "Token response did not contain id_token as required"
-    @id_token = JWT.decode(@token_response_body['id_token'], nil, false).reduce({}, :merge)
-    assert @id_token, 'id_token could not be parsed as JWT'
-    issuer = @id_token['iss']
-    assert issuer, 'id_token did not contain iss as required'
-
-    #2.
-    issuer = issuer.chomp('/') if issuer.end_with?('/')
-    openid_configuration_url = issuer.concat('/.well-known/openid-configuration')
-    @openid_configuration_response = LoggedRestClient.get(openid_configuration_url)
-    assert_response_ok(@openid_configuration_response)
-    @openid_configuration_response_headers = @openid_configuration_response.headers
-    @openid_configuration_response_body = JSON.parse(@openid_configuration_response.body)
-
-    #3.
-    @jwks_uri = @openid_configuration_response_body['jwks_uri']
-    assert @jwks_uri, 'id_token did not contain JSON Web Key as required'
-
-    #4. TODO
-
-    #5. TODO
-
-  end
-
 end
