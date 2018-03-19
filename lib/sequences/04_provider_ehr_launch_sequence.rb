@@ -128,37 +128,45 @@ class ProviderEHRLaunchSequence < SequenceBase
     @instance.save!
     @instance.update(scopes: scopes)
 
+    if @token_response_body.has_key?('id_token')
+      @instance.save!
+      @instance.update(id_token: @token_response_body['id_token'])
+    end
+
   end
 
   test 'Data returned from token exchange contains required OpenID Connect information.',
-    '1. Examine the ID token for its issuer property '\
-    '2. Perform a GET {issuer}/.well-known/openid-configuration '\
-    '3. Fetch the server’s JSON Web Key by following the jwks_uri property '\
-    '4. Validate the token’s signature against the public key from step #3 '\
-    '5. Extract the profile claim and treat it as the URL of a FHIR resource' do
+    'http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation',
+    'Clients MUST validate the ID Token in the Token Response' do
 
-    #1.
-    assert @token_response_body.has_key?('id_token'), "Token response did not contain id_token as required"
-    @id_token = JWT.decode(@token_response_body['id_token'], nil, false).reduce({}, :merge)
-    assert @id_token, 'id_token could not be parsed as JWT'
-    issuer = @id_token['iss']
-    assert issuer, 'id_token did not contain iss as required'
-
-    #2.
-    issuer = issuer.chomp('/') if issuer.end_with?('/')
-    openid_configuration_url = issuer.concat('/.well-known/openid-configuration')
+    issuer = @instance.oauth_token_endpoint.chomp('/token')
+    openid_configuration_url = issuer + '/.well-known/openid-configuration'
     @openid_configuration_response = LoggedRestClient.get(openid_configuration_url)
     assert_response_ok(@openid_configuration_response)
     @openid_configuration_response_headers = @openid_configuration_response.headers
     @openid_configuration_response_body = JSON.parse(@openid_configuration_response.body)
 
-    #3.
-    @jwks_uri = @openid_configuration_response_body['jwks_uri']
-    assert @jwks_uri, 'id_token did not contain JSON Web Key as required'
+    jwks_uri = @openid_configuration_response_body['jwks_uri']
+    assert jwks_uri, 'openid-configuration response did not contain jwks_uri as required'
+    @jwk_response = LoggedRestClient.get(jwks_uri)
+    assert_response_ok(@jwk_response)
+    @jwk_response_headers = @jwk_response.headers
+    @jwk_response_body = JSON.parse(@jwk_response.body)
+    assert @jwk_response_body.has_key?('keys') && @jwk_response_body['keys'].length > 0, 'JWK response does not have keys as required'
+    key_info = @jwk_response_body['keys'][0]
+    assert key_info.has_key?('n'), "JWK response does not have public key as required"
+    @public_key = key_info['n']
+    assert key_info.has_key?('alg'), "JWK response does not have alg as required"
+    @alg = key_info['alg']
 
-    #4. TODO
+    assert @token_response_body.has_key?('id_token'), "Token response did not contain id_token as required"
+    @id_token = JWT.decode(@token_response_body['id_token'], @public_key, false, { algorithm: @alg }).reduce({}, :merge)
+    assert @id_token, 'id_token could not be parsed as JWT'
+    binding.pry
 
-    #5. TODO
+    assert @id_token['iss'].chomp('/') == issuer, 'id_token iss does not match provided issuer'
+    assert @id_token['alg'] == @alg, 'id_token alg does not match JWK alg'
+    assert @id_token['profile'] =~ URI::regexp, 'id_token profile is not a valid URL'
 
   end
 

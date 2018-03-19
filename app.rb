@@ -29,7 +29,6 @@ end
 require './lib/version'
 
 #TODO clean up database stuff
-OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 DataMapper.finalize
 
