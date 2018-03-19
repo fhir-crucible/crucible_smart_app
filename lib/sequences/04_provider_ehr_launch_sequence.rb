@@ -135,39 +135,4 @@ class ProviderEHRLaunchSequence < SequenceBase
 
   end
 
-  test 'Data returned from token exchange contains required OpenID Connect information.',
-    'http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation',
-    'Clients MUST validate the ID Token in the Token Response' do
-
-    issuer = @instance.oauth_token_endpoint.chomp('/token')
-    openid_configuration_url = issuer + '/.well-known/openid-configuration'
-    @openid_configuration_response = LoggedRestClient.get(openid_configuration_url)
-    assert_response_ok(@openid_configuration_response)
-    @openid_configuration_response_headers = @openid_configuration_response.headers
-    @openid_configuration_response_body = JSON.parse(@openid_configuration_response.body)
-
-    jwks_uri = @openid_configuration_response_body['jwks_uri']
-    assert jwks_uri, 'openid-configuration response did not contain jwks_uri as required'
-    @jwk_response = LoggedRestClient.get(jwks_uri)
-    assert_response_ok(@jwk_response)
-    @jwk_response_headers = @jwk_response.headers
-    @jwk_response_body = JSON.parse(@jwk_response.body)
-    assert @jwk_response_body.has_key?('keys') && @jwk_response_body['keys'].length > 0, 'JWK response does not have keys as required'
-    key_info = @jwk_response_body['keys'][0]
-    assert key_info.has_key?('n'), "JWK response does not have public key as required"
-    @public_key = key_info['n']
-    assert key_info.has_key?('alg'), "JWK response does not have alg as required"
-    @alg = key_info['alg']
-
-    assert @token_response_body.has_key?('id_token'), "Token response did not contain id_token as required"
-    @id_token = JWT.decode(@token_response_body['id_token'], @public_key, false, { algorithm: @alg }).reduce({}, :merge)
-    assert @id_token, 'id_token could not be parsed as JWT'
-    binding.pry
-
-    assert @id_token['iss'].chomp('/') == issuer, 'id_token iss does not match provided issuer'
-    assert @id_token['alg'] == @alg, 'id_token alg does not match JWK alg'
-    assert @id_token['profile'] =~ URI::regexp, 'id_token profile is not a valid URL'
-
-  end
-
 end

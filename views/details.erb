@@ -228,6 +228,34 @@
   </div>
 </div>
 
+<div class="modal fade" id="OpenIDConnectModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">OpenID Connect</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="POST" action="OpenIDConnect">
+        <div class="modal-body">
+          <p>
+            Please provide the issuer URL:
+          </p>
+          <div class="form-group">
+            <label for="OpenIDConnectIssuer">Issuer URL</label>
+            <input id="OpenIDConnectIssuer" name="issuer" class="form-control" value="<%=instance.oauth_token_endpoint.chomp('/token') unless instance.oauth_token_endpoint.nil? %>" required>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Run OpenID Connect</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="TokenIntrospectionSkipModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
@@ -351,7 +379,7 @@
       <form method="POST" action="ArgonautDataQuery">
         <div class="modal-body">
           <p>
-          This sequence will perform queries in accordance with the Argonaut Data Query Server Guide. 
+          This sequence will perform queries in accordance with the Argonaut Data Query Server Guide.
           </p>
           <div class="form-group">
             <label for="registration_url">Supported Resources</label>
@@ -361,10 +389,10 @@
                   <% group.each do |resource| %>
                     <% next if resource.nil? %>
                     <div class="form-check">
-                      <input class="form-check-input" 
-                             type="checkbox" 
-                             id="resource_supported_<%=resource.resource_type %>" 
-                             name="resource_supported_<%=resource.resource_type %>" 
+                      <input class="form-check-input"
+                             type="checkbox"
+                             id="resource_supported_<%=resource.resource_type %>"
+                             name="resource_supported_<%=resource.resource_type %>"
                              <% if resource.supported %>checked<%end%>
                              disabled>
                       <label class="form-check-label" for="resource_supported_<%=resource.resource_type %>">
@@ -401,7 +429,7 @@
       <form method="POST" action="ArgonautProfiles">
         <div class="modal-body">
           <p>
-          This sequence will check the following resources returned by the Argonaut Query Sequence against 
+          This sequence will check the following resources returned by the Argonaut Query Sequence against
           the relevant Argonaut profile.
           </p>
           <% if instance.resource_references.count > 0 %>

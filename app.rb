@@ -169,7 +169,7 @@ post '/smart/:id/ArgonautDataQuery' do
   halt 404 if instance.nil?
 
   instance.resource_references.select{|ref| ref.resource_type == 'Patient'}.each(&:destroy)
-  params['patient_id'].split(",").map(&:strip).each do |patient_id| 
+  params['patient_id'].split(",").map(&:strip).each do |patient_id|
     instance.resource_references << ResourceReference.new({resource_type: 'Patient', resource_id: patient_id})
   end
 
@@ -203,13 +203,21 @@ end
 post '/smart/:id/PatientStandaloneLaunch/?' do
   @instance = TestingInstance.get(params[:id])
   @instance.update(scopes: params['scopes'])
+  @instance.update(id_token: nil)
   redirect "/smart/#{params[:id]}/PatientStandaloneLaunch/"
 end
 
 post '/smart/:id/ProviderEHRLaunch/?' do
   @instance = TestingInstance.get(params[:id])
   @instance.update(scopes: params['scopes'])
+  @instance.update(id_token: nil)
   redirect "/smart/#{params[:id]}/ProviderEHRLaunch/"
+end
+
+post '/smart/:id/OpenIDConnect/?' do
+  @instance = TestingInstance.get(params[:id])
+  @instance.update(issuer: params['issuer'])
+  redirect "/smart/#{params[:id]}/OpenIDConnect/"
 end
 
 post '/smart/:id/TokenIntrospectionSkip/?' do

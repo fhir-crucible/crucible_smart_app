@@ -22,9 +22,11 @@ class TestingInstance
 
   property :token, String
   property :token_retrieved_at, DateTime
-
+  property :id_token, Object
   property :created_at, DateTime, default: proc { DateTime.now }
-  
+
+  property :issuer, String
+
   property :oauth_introspection_endpoint, String
   property :resource_id, String
   property :resource_secret, String
@@ -35,9 +37,9 @@ class TestingInstance
   has n, :resource_references
 
   def latest_results
-    self.sequence_results.reduce({}) do |hash, result| 
+    self.sequence_results.reduce({}) do |hash, result|
       if hash[result.name].nil? || hash[result.name].created_at < result.created_at
-        hash[result.name] = result 
+        hash[result.name] = result
       end
       hash
     end

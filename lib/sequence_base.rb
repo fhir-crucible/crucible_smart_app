@@ -326,7 +326,7 @@ class SequenceBase
       end
     end
   end
-  
+
   def save_resource_ids_in_bundle(klass, reply)
 
     return if reply.try(:resource).try(:entry).nil?
@@ -383,6 +383,7 @@ class SequenceBase
         DynamicRegistrationSequence,
         PatientStandaloneLaunchSequence,
         ProviderEHRLaunchSequence,
+        OpenIDConnectSequence,
         TokenIntrospectionSequence,
         ArgonautDataQuerySequence,
         ArgonautProfilesSequence,
