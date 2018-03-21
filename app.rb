@@ -28,8 +28,6 @@ end
 
 require './lib/version'
 
-#TODO clean up database stuff
-
 DataMapper.finalize
 
 [TestingInstance, SequenceResult, TestResult, TestWarning, RequestResponse, RequestResponseTestResult, SupportedResource, ResourceReference].each do |model|
@@ -49,6 +47,9 @@ helpers do
   end
   def app_name
     settings.app_name
+  end
+  def show_tutorial
+    settings.show_tutorial
   end
 end
 
