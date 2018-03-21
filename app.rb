@@ -220,7 +220,6 @@ end
 
 post '/smart/:id/OpenIDConnect/?' do
   @instance = TestingInstance.get(params[:id])
-  @instance.update(issuer: params['issuer'])
   redirect "/smart/#{params[:id]}/OpenIDConnect/"
 end
 

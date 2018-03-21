@@ -24,7 +24,6 @@ class TestingInstance
   property :token_retrieved_at, DateTime
   property :id_token, String
   property :created_at, DateTime, default: proc { DateTime.now }
-  property :issuer, String
 
   property :oauth_introspection_endpoint, String
   property :resource_id, String

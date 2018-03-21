@@ -2,18 +2,29 @@ class OpenIDConnectSequence < SequenceBase
 
   title 'OpenID Connect Sequence'
   description 'Verify OpenID Connect functionality of server.'
-  modal_before_run
 
   preconditions 'Client must have ID token.' do
     !@instance.id_token.nil?
   end
 
-  test 'OpenID Provider Configuration information properly returned.',
-    'https://openid.net/specs/openid-connect-discovery-1_0.html',
-    "Using the Issuer location discovered as described in Section 2 or by other means, the OpenID Provider's configuration information can be retrieved." do
+  test 'ID token has issuer property.',
+    'http://docs.smarthealthit.org/authorization/scopes-and-launch-context/',
+    '1. Examine the ID token for its issuer property' do
 
-    issuer = @instance.issuer.chomp('/')
-    openid_configuration_url = issuer + '/.well-known/openid-configuration'
+    @decoded_token = JWT.decode(@instance.id_token, @public_key, false, { algorithm: @alg }).reduce({}, :merge)
+    assert !@decoded_token.nil?, 'id_token could not be parsed as JWT'
+    @issuer = @decoded_token['iss']
+    assert !@issuer.nil?, 'id_token did not contain iss as required'
+
+  end
+
+  test 'OpenID configuration response properly returned.',
+    'http://docs.smarthealthit.org/authorization/scopes-and-launch-context/',
+    '2. Perform a GET {issuer}/.well-known/openid-configuration' do
+
+    assert !@issuer.nil?, 'no issuer available'
+    @issuer = @issuer.chomp('/')
+    openid_configuration_url = @issuer + '/.well-known/openid-configuration'
     @openid_configuration_response = LoggedRestClient.get(openid_configuration_url)
     assert_response_ok(@openid_configuration_response)
     @openid_configuration_response_headers = @openid_configuration_response.headers
@@ -22,8 +33,8 @@ class OpenIDConnectSequence < SequenceBase
   end
 
   test 'JSON Web Key information properly returned.',
-    'https://openid.net/specs/openid-connect-discovery-1_0.html',
-    "jwks_uri REQUIRED. URL of the OP's JSON Web Key Set [JWK] document. This contains the signing key(s) the RP uses to validate signatures from the OP." do
+    'http://docs.smarthealthit.org/authorization/scopes-and-launch-context/',
+    '3. Fetch the server’s JSON Web Key by following the “jwks_uri” property' do
 
     assert !@openid_configuration_response_body.nil?, 'no openid-configuration response body available'
     jwks_uri = @openid_configuration_response_body['jwks_uri']
@@ -41,16 +52,25 @@ class OpenIDConnectSequence < SequenceBase
 
   end
 
-  test 'Data returned from token exchange contains required OpenID Connect information.',
-    'http://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation',
-    'Clients MUST validate the ID Token in the Token Response' do
+  test 'ID token signature validated.',
+    'http://docs.smarthealthit.org/authorization/scopes-and-launch-context/',
+    '4. Validate the token’s signature against the public key from step #3' do
 
+    assert !@issuer.nil?, 'no issuer available'
     assert !@public_key.nil?, 'no public key available'
     assert !@alg.nil?, 'no decryption algorithm available'
-    @decoded_token = JWT.decode(@instance.id_token, @public_key, false, { algorithm: @alg }).reduce({}, :merge)
-    assert @decoded_token, 'id_token could not be parsed as JWT'
-    assert @decoded_token['iss'].chomp('/') == @instance.issuer.chomp('/'), 'id_token iss does not match provided issuer'
-    assert @decoded_token['alg'] == @alg, 'id_token alg does not match JWK alg'
+    @validated_token = JWT.decode(@instance.id_token, @public_key, false, { algorithm: @alg }).reduce({}, :merge)
+    assert !@validated_token.nil?, 'id_token signature was not properly validated'
+    assert @validated_token['iss'].chomp('/') == @issuer.chomp('/'), 'id_token iss does not match issuer claim'
+    assert @validated_token['alg'] == @alg, 'id_token alg does not match JWK alg'
+
+  end
+
+  test 'ID token has profile claim as resource URL.',
+    'http://docs.smarthealthit.org/authorization/scopes-and-launch-context/',
+    '5. Extract the profile claim and treat it as the URL of a FHIR resource' do
+
+    assert !@decoded_token.nil?, 'id_token was not properly parsed as JWT'
     assert @decoded_token['profile'] =~ URI::regexp, 'id_token profile is not a valid URL'
 
   end
