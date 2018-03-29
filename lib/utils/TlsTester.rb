@@ -41,7 +41,6 @@ class TlsTester
   end
 
   def verifyDenyProtocol(ssl_version, readable_version)
-
     sslClient, tcpSocket = getConnection(ssl_version)
 
     # attempt the connection and handshake
