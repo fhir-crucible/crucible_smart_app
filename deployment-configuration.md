@@ -6,20 +6,22 @@ This document decribes how to install the software on various platforms.
 Run on Amazon Web Services EC2 using an Amazon Machine Image (AMI)
 ==================================================================
 
+An AWS account is required to use AMI version. If you wish to run it locally, you can use Docker, or a number of other configuration options described below.
 
-The latest AMI ID is `ami-d0a778ad`.
+The latest AMI ID is `ami-833d94fe`.
 
 After your instance is loaded, the application will be acceisable on port 80 (the standard port for HTTP).
 Use the following link to jumpstart your deployment:
 
 
-https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#LaunchInstanceWizard:ami=ami-d0a778ad
+https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#LaunchInstanceWizard:ami=ami-833d94fe
 
 
-A `t2.micro` sized instance should be sufficient  for sites expecting a low about of traffic.
-An AWS account is required to use AMI version. If you wish to run it locally, you can use Docker,
-or a number of other configuration options described below.
+A `t2.micro` sized instance should be sufficient  for sites expecting a low amount of traffic.
 
+It is important to open port `80` for HTTP  and port `22` for SSH if you need to gain shell access to the server.  Instead of clicking the "Review and Launch" button, click next button until you get to the Security Groups option. Ensure 80 is accessible from anywhere and 22 is avaiable from an IP range from which you will connect.  Please see the image entitled "security-groups.png" in the deployment-files directory for an example of this setting.
+
+After this step is done, launch the instance.  Obtain your instance's IP or host name from the AWS console. Point a web browser to the instance using the IP address or host name.
 
 
 Ubuntu 16.04 With Nginx and Unicorn Installation (Preferred Method)
@@ -28,7 +30,7 @@ Ubuntu 16.04 With Nginx and Unicorn Installation (Preferred Method)
 This section details how to configure the crucible_smart_app using Nginx 
 and Unicorn on Ubuntu 16.
 
-1. Remove Apache2 if already installed. 
+1. Remove Apache2 if already installed.
 
 
     sudo apache2ctl stop
@@ -37,7 +39,24 @@ and Unicorn on Ubuntu 16.
 
 2. Setup the crucible_smart_app.
 
-Issue the following commands to setup the crucible smart app.
+TLS connection testing requires Ruby 2.5 or greater. To check to see what version of ruby is installed, type in the following command:
+
+ruby --version
+
+If you are not running version Ruby 2.5, you can install it using Ruby Version Manager (rvm) by issuing the following commands.
+
+
+    sudo apt-get install libgdbm-dev libncurses5-dev automake libtool bison libffi-dev
+    gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+    curl -sSL https://get.rvm.io | bash -s stable
+    source ~/.rvm/scripts/rvm
+    rvm install 2.5.0
+    rvm use 2.5.0 --default
+    ruby -v
+    gem install bundle
+
+
+Now, issue the following commands to setup the crucible smart app.
 
 
      sudo apt-get update
@@ -83,7 +102,7 @@ You can now test this is working by pointing your browser
 
 Note: If you need to stop Unicorn use the following command.
 
-    cat tmp/pids/unicorn.pid | xargs kill -Q
+    cat tmp/pids/unicorn.pid | xargs kill -QUIT
 
 8. Configure Nginix to proxy to Unicorn
 
